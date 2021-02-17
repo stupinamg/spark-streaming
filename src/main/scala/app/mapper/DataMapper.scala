@@ -1,7 +1,10 @@
 package app.mapper
 
+import app.model.ExpediaData
 import com.typesafe.config.Config
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, from_json}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
 
 /** Mapper for the data obtained from different sources */
 class DataMapper {
@@ -16,32 +19,66 @@ class DataMapper {
    * @return dataframe of the expedia data
    */
   def getExpediaDataFromHdfs(config: Config) = {
-    val filePath = config.getString("hdfs.filePath")
+    val filePath = config.getString("hdfs.sourcePath2016")
 
     spark.read
       .format("avro")
       .load(filePath)
   }
 
-  /** Reads data from Kafka
+  /** Reads data as stream from HDFS
    *
-   * @param config configuration values for the Kafka
-   * @return dataframe of the hotels+weather data
+   * @param config configuration values for the HDFS
+   * @return dataframe of the expedia data
    */
-  def getHotelsWeatherDataFromKafka(config: Config) = {
+  def getExpediaDataAsStreamFromHdfs(config: Config) = {
+    val filePath = config.getString("hdfs.sourcePath2017")
+    val schema = Encoders.product[ExpediaData].schema
+
+    spark.readStream
+      .format("avro")
+      .schema(schema)
+      .load(filePath)
+  }
+
+  /** Reads batches of data from Kafka
+   *
+   * @param kafka Kafka broker
+   * @param topic Kafka source topic name
+   * @return dataframe of data
+   */
+  def getDataFromKafka(kafka: String, topic: String) = {
     import spark.implicits._
 
     val inputDf = spark
       .read
       .format("kafka")
-      .option("kafka.bootstrap.servers", config.getString("kafka.broker"))
-      .option("subscribe", config.getString("kafka.topic"))
-//      .option("startingOffsets", config.getString("kafka.startOffset"))
-//      .option("endingOffsets", config.getString("kafka.endOffset"))
+      .option("kafka.bootstrap.servers", kafka)
+      .option("subscribe", topic)
       .option("failOnDataLoss", "false")
       .load()
       .selectExpr("CAST(value AS STRING) as string").as[String]
     spark.read.json(inputDf)
+  }
+
+  /** Reads stream of data from Kafka
+   *
+   * @param kafka Kafka broker
+   * @param topic Kafka source topic name
+   * @param schema schema for converting data to object
+   * @return dataframe of data
+   */
+  def getDataAsStreamFromKafka(kafka: String, topic: String, schema: StructType): DataFrame = {
+    import spark.implicits._
+
+    spark.readStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", kafka)
+      .option("subscribe", topic)
+      .option("startingoffsets", "earliest")
+      .load()
+      .selectExpr("CAST(value AS STRING) as data").as[String]
+      .select(from_json(col("data"), schema).as("values")).select("values.*")
   }
 
 }
