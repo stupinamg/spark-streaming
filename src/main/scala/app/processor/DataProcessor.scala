@@ -27,22 +27,22 @@ class DataProcessor {
 
   /** Processes data in stream or batch manner
    *
-   * @param expediaData stream or batches of expedia data from HDFS
+   * @param expediaData       stream or batches of expedia data from HDFS
    * @param hotelsWeatherData dataframe with data
-   * @param config configuration values
+   * @param config            configuration values
+   * @return dataframe with processed data
    */
   def processData(expediaData: DataFrame, hotelsWeatherData: DataFrame, config: Config) = {
     val enrichedBookingData = enrichBookingData(expediaData, hotelsWeatherData)
     val customerPrefData = createCustomerPreferences(enrichedBookingData, config)
     val dataWithStayType = findPopularStayType(customerPrefData, config)
 
-    if (expediaData.isStreaming) outputSink.writeStreamDataToHdfs(dataWithStayType, config)
-    else outputSink.writeBatchDataToHdfs(dataWithStayType, config)
+    dataWithStayType
   }
 
   /** Enriches booking data with temperature more than MIN_TMPR
    *
-   * @param expediaData expedia dataframe
+   * @param expediaData       expedia dataframe
    * @param hotelsWeatherData hotels with weather dataframe
    * @return dataframe of data
    */
@@ -64,7 +64,7 @@ class DataProcessor {
   /** Creates customer preferences info
    *
    * @param bookingData booking data
-   * @param config configuration values
+   * @param config      configuration values
    * @return dataframe of data with customer preferences
    */
   private def createCustomerPreferences(bookingData: DataFrame, config: Config): DataFrame = {
@@ -102,7 +102,7 @@ class DataProcessor {
 
   /** Generates statistics about the popular type of stay
    *
-   * @param data info about customer preferences
+   * @param data   info about customer preferences
    * @param config configuration values
    * @return dataframe with info about stay types by hotel
    */

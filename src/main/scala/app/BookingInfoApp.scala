@@ -1,6 +1,7 @@
 package app
 
 import app.mapper.DataMapper
+import app.outputSink.OutputSink
 import app.processor.DataProcessor
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.{SparkConf, SparkContext}
@@ -22,6 +23,7 @@ object BookingInfoApp {
     val sc = new SparkContext(conf)
     val mapper = new DataMapper
     val processor = new DataProcessor
+    val outputSink = new OutputSink
 
     val kafkaBroker = config.getString("kafka.broker")
     val inputTopic = config.getString("kafka.inputTopic")
@@ -29,11 +31,13 @@ object BookingInfoApp {
 
     //batch option
     val expediaData2016 = mapper.getExpediaDataFromHdfs(config)
-    processor.processData(expediaData2016, hotelsWeatherData, config)
+    val dataWithStayType2016 = processor.processData(expediaData2016, hotelsWeatherData, config)
+    outputSink.writeBatchDataToHdfs(dataWithStayType2016, config)
 
     //stream option
-//    val expediaData2017 = mapper.getExpediaDataAsStreamFromHdfs(config)
-//    processor.processData(expediaData2017, hotelsWeatherData, config)
+    val expediaData2017 = mapper.getExpediaDataAsStreamFromHdfs(config)
+    val dataWithStayType2017 = processor.processData(expediaData2017, hotelsWeatherData, config)
+    outputSink.writeStreamDataToHdfs(dataWithStayType2017, config)
 
     sc.stop()
   }
