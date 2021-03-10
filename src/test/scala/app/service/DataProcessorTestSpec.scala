@@ -1,4 +1,4 @@
-package app.processor
+package app.service
 
 import app.model.{ExpediaData, HotelsWeather}
 import app.traits.SparkSessionTestWrapper

@@ -1,4 +1,4 @@
-package app.outputSink
+package app.output
 
 import com.typesafe.config.Config
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}

@@ -1,4 +1,4 @@
-package app.outputSink
+package app.output
 
 import app.mapper.DataMapper
 import app.model.{StayType, StayWithChildrenPresence}

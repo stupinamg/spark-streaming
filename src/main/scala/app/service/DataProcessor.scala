@@ -1,8 +1,8 @@
-package app.processor
+package app.service
 
 import app.mapper.DataMapper
 import app.model.{BookingData, CustomerPrefData, StayWithChildrenPresence}
-import app.outputSink.OutputSink
+import app.output.OutputSink
 import com.typesafe.config.Config
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
