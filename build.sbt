@@ -23,6 +23,7 @@ libraryDependencies ++= Seq(
   "net.manub" %% "scalatest-embedded-kafka" % "2.0.0" % Test
 )
 
+parallelExecution in Test := false
 assemblySettings
 
 mergeStrategy in assembly := {
